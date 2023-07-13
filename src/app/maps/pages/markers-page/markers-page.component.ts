@@ -7,6 +7,11 @@ interface MarkerAndColor {
   marker: Marker,
 }
 
+interface PlainMarker {
+  color: string,
+  lngLat: number[],
+}
+
 @Component({
   templateUrl: './markers-page.component.html',
   styleUrls: ['./markers-page.component.css']
@@ -32,6 +37,8 @@ export class MarkersPageComponent implements AfterViewInit {
       center: this.actualCenter, // starting position [lng, lat]
       zoom: 10, // starting zoom
     });
+
+    this.readFromLocalStorage();
   }
 
   // metodo que se llamara cuando se pulse el boton de añadir marcador
@@ -59,6 +66,12 @@ export class MarkersPageComponent implements AfterViewInit {
       color,
       marker,
     });
+
+    this.saveToLocalStorage();
+
+    marker.on('dragend', () => {
+      this.saveToLocalStorage()
+    });
   }
 
   // metodo que usaremos para eliminar el marcador deseado
@@ -76,5 +89,33 @@ export class MarkersPageComponent implements AfterViewInit {
       zoom: 10,
       center: marker.getLngLat()
     });
+  }
+
+  // metodo que usaremos para hacer persistentes nuestros marcadores
+  saveToLocalStorage() {
+
+    // obtenemos y retornamos los marcadores que ha agregado el usuario, pero solo el color y las coordenadas
+    const plainMarkers: PlainMarker[] = this.userMarkers.map(({ color, marker }) => {
+      return {
+        color,
+        lngLat: marker.getLngLat().toArray()
+      }
+    });
+
+    localStorage.setItem('plainMarkers', JSON.stringify(plainMarkers));
+  }
+
+  // metodo que usaremos para leer del local storage nuestros marcadores
+  readFromLocalStorage() {
+    const plainMarkersString = localStorage.getItem('plainMarkers') ?? '[]';
+    const plainMarkers: PlainMarker[] = JSON.parse(plainMarkersString); //! OJO CUIDAO
+
+    plainMarkers.forEach(({ color, lngLat }) => {
+      const [lng, lat] = lngLat;
+      const coordenadas = new LngLat(lng, lat);
+
+      this.addMarker(coordenadas, color)
+    })
+
   }
 }
