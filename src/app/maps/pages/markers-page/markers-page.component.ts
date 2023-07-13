@@ -1,7 +1,11 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 
 import { LngLat, Map, Marker } from 'mapbox-gl';
-import { elementAt } from 'rxjs';
+
+interface MarkerAndColor {
+  color: string,
+  marker: Marker,
+}
 
 @Component({
   templateUrl: './markers-page.component.html',
@@ -14,7 +18,7 @@ export class MarkersPageComponent implements AfterViewInit {
 
   public map?: Map;
   public actualCenter: LngLat = new LngLat(-74.5, 40); // propiedad que usaremos para controlar el centro del mapa
-  public userMarkers: Marker[] = [] // array en el que almacenaremos los marcadores del usuario
+  public userMarkers: MarkerAndColor[] = [] // array en el que almacenaremos los marcadores del usuario
 
 
   ngAfterViewInit(): void {
@@ -28,20 +32,9 @@ export class MarkersPageComponent implements AfterViewInit {
       center: this.actualCenter, // starting position [lng, lat]
       zoom: 10, // starting zoom
     });
-
-    //   const markerHtml = document.createElement('div')
-    //   markerHtml.innerHTML = 'User´s marker'
-
-    //   const marker = new Marker(
-    //     {
-    //       color: '#252525',
-    //       element: markerHtml
-    //     }
-    //   )
-    //     .setLngLat(this.actualCenter)
-    //     .addTo(this.map)
   }
 
+  // metodo que se llamara cuando se pulse el boton de añadir marcador
   createMarker() {
     if (!this.map) return;
 
@@ -62,6 +55,26 @@ export class MarkersPageComponent implements AfterViewInit {
       }
     ).setLngLat(lngLat).addTo(this.map)
 
-    this.userMarkers.push(marker);
+    this.userMarkers.push({
+      color,
+      marker,
+    });
+  }
+
+  // metodo que usaremos para eliminar el marcador deseado
+  deleteMarker(index: number) {
+    this.userMarkers[index].marker.remove();
+    this.userMarkers.splice(index, 1)
+
+  }
+
+  // metodo que usaremos para volar hacia el marcador deseado
+  goToMarker(marker: Marker) {
+    if (!this.map) return;
+
+    this.map.flyTo({
+      zoom: 10,
+      center: marker.getLngLat()
+    });
   }
 }
